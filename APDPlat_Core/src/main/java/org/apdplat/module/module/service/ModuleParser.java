@@ -35,13 +35,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apdplat.platform.log.APDPlatLoggerFactory;
 
 /**
  *
  * @author 杨尚川
  */
 public class ModuleParser {
-    private static final APDPlatLogger LOG = new APDPlatLogger(ModuleParser.class);
+    private static final APDPlatLogger LOG = APDPlatLoggerFactory.getAPDPlatLogger(ModuleParser.class);
     private static final String dtdFile="/target/module.dtd";
     private static final String disableModules=PropertyHolder.getProperty("module.disable");
     /**
@@ -118,33 +121,33 @@ public class ModuleParser {
      * @param module  模块树的根
      */
     private static void assembleMudule(Module module){
-        int order=1;
-        for(Command c : module.getCommands()){
+        AtomicInteger order1=new AtomicInteger();
+        module.getCommands().forEach(c -> {
             c.setModule(module);
             if(c.getOrderNum()==0){
-                c.setOrderNum(order++);
+                c.setOrderNum(order1.incrementAndGet());
             }
-        }
-        order=1;
+        });
+        AtomicInteger order2=new AtomicInteger();
         List<Module> toDelete=new ArrayList<>();
-        for(Module m : module.getSubModules()){            
+        module.getSubModules().forEach(m -> {
             //根据参数module.hide来设置模块
             if(disableModules.contains(m.getEnglish())){
                 LOG.info("禁用: "+m.getChinese());
                 toDelete.add(m);                
-                continue;
+                return;
             }else{
                 LOG.info("启用: "+m.getChinese());
             }
             m.setParentModule(module);
             if(m.getOrderNum()==0){
-                m.setOrderNum(order++);
+                m.setOrderNum(order2.incrementAndGet());
             }
             assembleMudule(m);
-        }
-        for(Module m : toDelete){
+        });
+        toDelete.forEach(m -> {
             module.removeSubModule(m);
-        }
+        });
     }
     private static void prepareDtd(){
         try{
@@ -186,16 +189,16 @@ public class ModuleParser {
     }
     private static void print(Module module,String pre){
         System.out.println(pre+module.getChinese()+":"+module.getEnglish()+":"+module.getOrderNum()+":"+module.isDisplay());
-        for(Command command : module.getCommands()){
+        module.getCommands().forEach(command -> {
             System.out.println(pre+"    "+command.getChinese()+":"+command.getEnglish()+":"+command.getOrderNum());
-        }
-        for(Module sub : module.getSubModules()){
+        });
+        module.getSubModules().forEach(sub -> {
             print(sub,pre+"     ");
-        }
+        });
     }
     public static void main(String[] args){
-        for(Module module : getRootModules()){
+        getRootModules().forEach(module -> {
             print(module,"");
-        }
+        });
     }
 }

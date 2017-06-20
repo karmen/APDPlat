@@ -23,23 +23,24 @@ package org.apdplat.module.dictionary.service;
 import org.apdplat.module.dictionary.model.Dic;
 import org.apdplat.module.dictionary.model.DicItem;
 import org.apdplat.platform.log.APDPlatLogger;
+import org.apdplat.platform.log.APDPlatLoggerFactory;
 import org.apdplat.platform.util.FileUtils;
 import org.apdplat.platform.util.XMLFactory;
 import org.apdplat.platform.util.XMLUtils;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
  * @author 杨尚川
  */
 public class DicParser {
-    private static final APDPlatLogger LOG = new APDPlatLogger(DicParser.class);
+    private static final APDPlatLogger LOG = APDPlatLoggerFactory.getAPDPlatLogger(DicParser.class);
     private static final String dtdFile="/target/dic.dtd";
     /**
      * 返回所有Dic对象中dicItems不为空的Dic对象
@@ -48,18 +49,18 @@ public class DicParser {
     public static List<Dic> getLeafDics(){
         List<Dic> dics=getDics();
         List<Dic> result=new ArrayList<>();
-        for(Dic dic : dics){
+        dics.forEach(dic -> {
             execute(result,dic);
-        }
+        });
         return result;
     }
     private static void execute(List<Dic> result,Dic dic){
         if(dic.getDicItems().size()>0){
             result.add(dic);
         }
-        for(Dic item : dic.getSubDics()){
+        dic.getSubDics().forEach(item -> {
             execute(result,item);
-        }
+        });
     }
     
     /**
@@ -73,11 +74,9 @@ public class DicParser {
         try{
             Enumeration<URL> ps = Thread.currentThread().getContextClassLoader().getResources("META-INF/services/dic.xml");
             while(ps.hasMoreElements()) {
-                InputStream in = null;
-                try {
-                    URL url=ps.nextElement();
-                    LOG.info("找到数据字典描述文件(Find data dictionary description file)："+url.getPath());
-                    in = url.openStream();
+                URL url=ps.nextElement();
+                LOG.info("找到数据字典描述文件(Find data dictionary description file)："+url.getPath());
+                try(InputStream in = url.openStream()) {
                     byte[] data=FileUtils.readAll(in);
                     String xml=new String(data,"utf-8");
                     LOG.info("将DTD文件替换为绝对路径(Replace DID file into absolute path)");
@@ -90,16 +89,8 @@ public class DicParser {
                     verifyFile(bin);
                     // 解析数据字典
                     parseDic(xml,dics);
-                }catch(Exception e)
-                {
+                }catch(Exception e){
                     LOG.error("解析数据字典出错(Error in parsing the data dictionary)",e);
-                }
-                finally {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        LOG.error("解析数据字典出错(Error in parsing the data dictionary)",e);
-                    }
                 }
             }            
         }catch(Exception e){
@@ -119,43 +110,33 @@ public class DicParser {
      * @param dic  数据字典树的根
      */
     private static void assembleDic(Dic dic){
-        Integer i=1;
-        for(DicItem c : dic.getDicItems()){
-            c.setDic(dic);
-            if(c.getOrderNum()==0){
-                c.setOrderNum(i++);
+        AtomicInteger i = new AtomicInteger();
+        dic.getDicItems().forEach(item -> {
+            item.setDic(dic);
+            if(item.getOrderNum()==0){
+                item.setOrderNum(i.incrementAndGet());
             }
-            if(c.getCode()==null){
-                c.setCode(i.toString());
+            if(item.getCode()==null){
+                item.setCode(i.toString());
             }
-        }
-        for(Dic d : dic.getSubDics()){
+        });
+        dic.getSubDics().forEach(d -> {
             d.setParentDic(dic);
             assembleDic(d);
-        }
+        });
     }
     private static void prepareDtd(){
         try{
             Enumeration<URL> ps = Thread.currentThread().getContextClassLoader().getResources("META-INF/services/dic.dtd");
             if(ps.hasMoreElements()) {
-                InputStream in = null;
-                try {
-                    URL url=ps.nextElement();
-                    LOG.info("找到数据字典DTD文件(Find data dictionary DID file)："+url.getPath());
-                    in = url.openStream();
+                URL url=ps.nextElement();
+                LOG.info("找到数据字典DTD文件(Find data dictionary DID file)："+url.getPath());
+                try(InputStream in = url.openStream()) {
                     byte[] data=FileUtils.readAll(in);
-                    LOG.info("将DTD复制到(Copy DID to)："+dtdFile);
                     FileUtils.createAndWriteFile(dtdFile, data);
-                }catch(Exception e)
-                {
+                    LOG.info("将DTD复制到(Copy DID to)："+dtdFile);
+                }catch(Exception e){
                     LOG.error("解析数据字典出错(Error in parsing the data dictionary)",e);
-                }
-                finally {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        LOG.error("解析数据字典出错(Error in parsing the data dictionary)",e);
-                    }
                 }
             }else{
                 LOG.info("没有找到数据字典DTD文件(Miss the data dictionary DID file)");
@@ -174,16 +155,16 @@ public class DicParser {
     }
     private static void print(Dic dic,String pre){
         System.out.println(pre+dic.getChinese()+":"+dic.getEnglish());
-        for(DicItem item : dic.getDicItems()){
+        dic.getDicItems().forEach(item -> {
             System.out.println(pre+"    "+item.getCode()+":"+item.getName()+":"+item.getOrderNum());
-        }
-        for(Dic sub : dic.getSubDics()){
+        });
+        dic.getSubDics().forEach(sub -> {
             print(sub,pre+"     ");
-        }
+        });
     }
     public static void main(String[] args){
-        for(Dic dic : getDics()){
+        getDics().forEach(dic -> {
             print(dic,"");
-        }
+        });
     }
 }

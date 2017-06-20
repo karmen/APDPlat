@@ -20,34 +20,32 @@
 
 package org.apdplat.platform.action;
 
+import org.apache.commons.lang.StringUtils;
 import org.apdplat.module.security.model.User;
 import org.apdplat.module.system.service.ExcelService;
+import org.apdplat.module.system.service.PropertyHolder;
 import org.apdplat.platform.action.converter.DateTypeConverter;
-import org.apdplat.platform.annotation.ModelAttr;
-import org.apdplat.platform.annotation.ModelAttrRef;
-import org.apdplat.platform.annotation.ModelCollRef;
-import org.apdplat.platform.annotation.RenderIgnore;
+import org.apdplat.platform.annotation.*;
 import org.apdplat.platform.criteria.Property;
 import org.apdplat.platform.model.Model;
 import org.apdplat.platform.result.Page;
 import org.apdplat.platform.util.ReflectionUtils;
 import org.apdplat.platform.util.SpringContextUtils;
-import org.apdplat.platform.util.Struts2Utils;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.web.bind.ServletRequestDataBinder;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.*;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
-import org.apache.commons.lang.StringUtils;
-import org.apdplat.platform.annotation.RenderDate;
-import org.apdplat.platform.annotation.RenderTime;
+import javax.persistence.Temporal;
+import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  *
@@ -60,11 +58,10 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
     protected T model = null;
     protected Class<T> modelClass;
     protected Page<T> page = new Page<>();
-    @Resource(name = "springContextUtils")
+    @Resource
     protected SpringContextUtils springContextUtils;
-    @Resource(name = "excelService")
+    @Resource
     protected ExcelService excelService;
-    protected Map map=null;
 
     @PostConstruct
     private void initModel() {
@@ -82,13 +79,81 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
             LOG.error("initModel fail");
         }
     }
+
+    @InitBinder
+    public void InitBinder(HttpServletRequest request,
+                           ServletRequestDataBinder binder) {
+        String format = PropertyHolder.getProperty("date.format");
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format);
+        dateFormat.setLenient(false);
+        binder.registerCustomEditor(Date.class, null, new CustomDateEditor(
+                dateFormat, true));
+        LOG.info("日期类型绑定: {}", format);
+    }
+
+    /**
+     * 前端向后端传递模型参数的时候都有model.前缀
+     * @param binder
+     */
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.setFieldDefaultPrefix("model.");
+    }
+
+    @ResponseBody
+    @RequestMapping("query.action")
+    public String query(@RequestParam(required=false) Integer start,
+                        @RequestParam(required=false) Integer limit,
+                        @RequestParam(required=false) String propertyCriteria,
+                        @RequestParam(required=false) String orderCriteria,
+                        @RequestParam(required=false) String queryString,
+                        @RequestParam(required=false) String search){
+        super.setStart(start);
+        super.setLimit(limit);
+        super.setPropertyCriteria(propertyCriteria);
+        super.setOrderCriteria(orderCriteria);
+        super.setQueryString(queryString);
+        setSearch("true".equals(search));
+        return query();
+    }
+
+    @ResponseBody
+    @RequestMapping("retrieve.action")
+    public String retrieve(@ModelAttribute T model) {
+        this.model = model;
+        return retrieve();
+    }
+
+    @ResponseBody
+    @RequestMapping("delete.action")
+    public String delete(@RequestParam String ids) {
+        super.setIds(ids);
+        return delete();
+    }
+
+    @ResponseBody
+    @RequestMapping("create.action")
+    public String create(@ModelAttribute T model) {
+        this.model = model;
+        return create();
+    }
+
+    @ResponseBody
+    @RequestMapping("updatePart.action")
+    public String updatePart(@ModelAttribute T model) {
+        this.model = model;
+        return updatePart();
+    }
     
     public String report(){
         
         return null;
     }
 
-    public String chart(){
+    @ResponseBody
+    @RequestMapping("chart.action")
+    public String chart(@RequestParam(required=false) String category,
+                        @RequestParam(required=false) Integer top){
         if(StringUtils.isNotBlank(getQueryString())){
             //搜索出所有数据   
             beforeSearch();
@@ -100,16 +165,19 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
             this.setPage(getService().query(modelClass));
         }
         //生成报表XML数据
-        String data=generateReportData(page.getModels());
+        String data=generateReportData(page.getModels(), category, top);
         if(StringUtils.isBlank(data)){
             LOG.info("生成的报表数据为空");
             return null;
         }
-        Struts2Utils.renderXml(data);
-        return null;
+        //业务处理完毕后删除页面数据引用，加速垃圾回收
+        this.getPage().getModels().clear();
+        this.setPage(null);
+        
+        return data;
     }
 
-    protected String generateReportData(List<T> models){
+    protected String generateReportData(List<T> models, String category, Integer top){
         return null;
     }
     private String getDefaultModelName(){
@@ -126,61 +194,44 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
             try{
                 checkModel(model);
             }catch(Exception e){
-                map=new HashMap();
+                Map map=new HashMap();
                 map.put("success", false);
-                map.put("message", e.getMessage()+",不能添加");
-                Struts2Utils.renderJson(map);
-                return null;
+                map.put("message", e.getMessage() + ",不能添加");
+                return toJson(map);
             }
             assemblyModelForCreate(model);
             objectReference(model);
             getService().create(model);
             afterSuccessCreateModel(model);
         }catch(Exception e){
-            LOG.error("创建模型失败",e);
+            LOG.error("创建模型失败", e);
             afterFailCreateModel(model);
-
-            map=new HashMap();
+            Map map=new HashMap();
             map.put("success", false);
-            map.put("message", "创建失败 "+e.getMessage());
-            Struts2Utils.renderJson(map);
-            return null;
+            map.put("message", "创建失败 " + e.getMessage());
+            return toJson(map);
         }
-        map=new HashMap();
+        Map map=new HashMap();
         map.put("success", true);
         map.put("message", "创建成功");
-        Struts2Utils.renderJson(map);
-        return null;
+        return toJson(map);
     }
 
-    @Override
-    public String createForm() {
-        return FORM;
-    }
     @Override
     public String retrieve() {
         this.setModel(getService().retrieve(modelClass, model.getId()));
         if(model==null){
-            Struts2Utils.renderText("false");
-            return null;
+            return "false";
         }
         afterRetrieve(model);
-        Map temp = new HashMap();
-        renderJsonForRetrieve(temp);
-        retrieveAfterRender(temp,model);
-        Struts2Utils.renderJson(temp);
-
-        return null;
+        Map map = new HashMap();
+        renderJsonForRetrieve(map);
+        retrieveAfterRender(map, model);
+        return toJson(map);
     }
    
     protected void afterRetrieve(T model){
         
-    }
-    
-    @Override
-    public String updateForm() {
-        setModel(getService().retrieve(modelClass, model.getId()));
-        return null;
     }
 
     @Override
@@ -199,48 +250,45 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
             }else{
                 LOG.info("前台界面传递了版本信息,version="+version);
             }
-            if(version!=model.getVersion()){
+            if(version.intValue()!=model.getVersion().intValue()){
                 LOG.info("当前数据的版本为 "+model.getVersion()+",您的版本为 "+version);
                 throw new RuntimeException("您的数据已过期，请重新修改");
             }
             
             old(model);
-            for(Property property : properties){
+            properties.forEach(property -> {
                 //把从浏览器传来的值射入model
-                if(property.getName().contains(".")){
-                     //处理两个对象之间的引用，如：model.org.id=1
-                     if(property.getName().contains(".id")){
-                        String[] attr=property.getName().replace(".",",").split(",");
-                        if(attr.length==2){
-                            Field field=ReflectionUtils.getDeclaredField(model, attr[0]);
-                            T change=getService().retrieve((Class<T>)field.getType(), (Integer)property.getValue());
+                if (property.getName().contains(".")) {
+                    //处理两个对象之间的引用，如：model.org.id=1
+                    if (property.getName().contains(".id")) {
+                        String[] attr = property.getName().replace(".", ",").split(",");
+                        if (attr.length == 2) {
+                            Field field = ReflectionUtils.getDeclaredField(model, attr[0]);
+                            T change = getService().retrieve((Class<T>) field.getType(), (Integer) property.getValue());
                             ReflectionUtils.setFieldValue(model, attr[0], change);
                         }
-                     }
-                }
-                else{
+                    }
+                } else {
                     ReflectionUtils.setFieldValue(model, property.getName(), property.getValue());
                 }
-            }
+            });
             now(model);
             //在更新前调用模板方法对模型进行处理
             assemblyModelForUpdate(model);
             getService().update(model);
             afterSuccessPartUpdateModel(model);
         }catch(Exception e){
-            LOG.error("更新模型失败",e);
+            LOG.error("更新模型失败", e);
             afterFailPartUpdateModel(model);
-            map=new HashMap();
+            Map map=new HashMap();
             map.put("success", false);
-            map.put("message", "修改失败 "+e.getMessage());
-            Struts2Utils.renderJson(map);
-            return null;
+            map.put("message", "修改失败 " + e.getMessage());
+            return toJson(map);
         }
-        map=new HashMap();
+        Map map=new HashMap();
         map.put("success", true);
         map.put("message", "修改成功");
-        Struts2Utils.renderJson(map);
-        return null;
+        return toJson(map);
     }
     @Override
     public String updateWhole() {
@@ -249,13 +297,11 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
             getService().update(model);
             afterSuccessWholeUpdateModel(model);
         }catch(Exception e){
-            LOG.error("更新模型失败",e);
+            LOG.error("更新模型失败", e);
             afterFailWholeUpdateModel(model);
-            Struts2Utils.renderText("false");
-            return null;
+            return "false";
         }
-        Struts2Utils.renderText("true");
-        return null;
+        return "true";
     }
     public void prepareForDelete(Integer[] ids){
 
@@ -270,12 +316,10 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
             List<Integer> deletedIds=getService().delete(modelClass, getIds());
             afterDelete(deletedIds);
         }catch(Exception e){
-            LOG.info("删除数据出错",e);
-            Struts2Utils.renderText(e.getMessage());
-            return null;
+            LOG.info("删除数据出错", e);
+            return e.getMessage();
         }
-        Struts2Utils.renderText("删除成功");
-        return null;
+        return "删除成功";
     }
     public void afterDelete(List<Integer> deletedIds){
 
@@ -284,17 +328,18 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
     public String query() {
         beforeQuery();
         if(search){
-            search();
-            return null;
+            return search();
         }
         this.setPage(getService().query(modelClass, getPageCriteria(), buildPropertyCriteria(), buildOrderCriteria()));
-        Map json = new HashMap();
-        json.put("totalProperty", page.getTotalRecords());
+        Map map = new HashMap();
+        map.put("totalProperty", page.getTotalRecords());
         List<Map> result = new ArrayList<>();
         renderJsonForQuery(result);
-        json.put("root", result);
-        Struts2Utils.renderJson(json);
-        return null;
+        map.put("root", result);
+        //业务处理完毕后删除页面数据引用，加速垃圾回收
+        this.getPage().getModels().clear();
+        this.setPage(null);
+        return toJson(map);
     }
 
     public String export() {
@@ -314,17 +359,20 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
         List<List<String>> result = new ArrayList<>();
         renderForExport(result);
         String path=excelService.write(result, exportFileName());
-        Struts2Utils.renderText(path);
-        return null;
+        //业务处理完毕后删除页面数据引用，加速垃圾回收
+        this.getPage().getModels().clear();
+        this.setPage(null);
+        
+        return path;
     }
     private List<T> processSearchResult(List<T> models){
         List<T> result =  new ArrayList<>();
-        for(T obj : models){
+        models.forEach(obj -> {
             T t=getService().retrieve(modelClass, obj.getId());
             if(t!=null){
                 result.add(t);
             }
-        }
+        });
         return result;
     }
     @Override
@@ -334,13 +382,12 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
         //List<T> models=processSearchResult(page.getModels());
         //page.setModels(models);
 
-        Map json = new HashMap();
-        json.put("totalProperty", page.getTotalRecords());
+        Map map = new HashMap();
+        map.put("totalProperty", page.getTotalRecords());
         List<Map> result = new ArrayList<>();
         renderJsonForSearch(result);
-        json.put("root", result);
-        Struts2Utils.renderJson(json);
-        return null;
+        map.put("root", result);
+        return toJson(map);
     }
     protected  void beforeQuery(){
 
@@ -353,7 +400,6 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
     }
     /**
      * 在【添加】一个特定的【完整】的Model之前对Model的组装，以确保组装之后的Model是一个语义完整的模型
-     * @return
      */
     protected void assemblyModelForCreate(T model) {
 
@@ -489,11 +535,11 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
             }
         }
        result.add(data);
-       for( T obj : page.getModels()){
-           data =new ArrayList<>();
-           renderDataForExport(data,obj);
-           result.add(data);
-       }
+       page.getModels().forEach(obj -> {
+           List<String> d =new ArrayList<>();
+           renderDataForExport(d,obj);
+           result.add(d);
+       });
     }
     private void renderDataForExport(List<String> data, T obj) {
         //获取所有字段，包括继承的
@@ -537,10 +583,10 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
                     LOG.debug("处理集合,字段为："+field.getName()+",大小为："+col.size());
                     if(col.size()>0){
                         StringBuilder str=new StringBuilder();
-                        for(Object m : col){
+                        col.forEach(m -> {
                             str.append(ReflectionUtils.getFieldValue(m, fieldRef).toString()).append(",");
-                        }
-                        str=str.deleteCharAt(str.length()-1);
+                        });
+                        str.setLength(str.length()-1);
                         colStr=str.toString();
                     }
                 }else{
@@ -577,12 +623,16 @@ public abstract class ExtJSSimpleAction<T extends Model> extends ExtJSActionSupp
                 }else if(field.isAnnotationPresent(RenderTime.class)){
                     value=DateTypeConverter.toDefaultDateTime((Date)value);
                 }else{
-                    //对于Date字段，如果没有指定渲染类型，则根据@Temporal来判断
-                    switch (valueClass) {
-                        case "Timestamp":
+                    //如果没有指定渲染类型，则根据@Temporal来判断
+                    String temporal = "TIMESTAMP";
+                    if(field.isAnnotationPresent(Temporal.class)){
+                        temporal = field.getAnnotation(Temporal.class).value().name();
+                    }
+                    switch (temporal) {
+                        case "TIMESTAMP":
                             value=DateTypeConverter.toDefaultDateTime((Date)value);
                             break;
-                        case "Date":
+                        case "DATE":
                             value=DateTypeConverter.toDefaultDate((Date)value);
                             break;
                     }

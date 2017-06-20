@@ -17,12 +17,12 @@
 --%>
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page  import="org.apdplat.platform.util.SpringContextUtils"%>
 <%@page  import="org.apdplat.module.security.service.OnlineUserService"%>
 <%@page  import="org.apdplat.module.security.service.SpringSecurityService"%>
-<%@page  import="org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter"%>
 <%@page  import="org.apdplat.module.security.service.UserDetailsServiceImpl"%>
 <%@page  import="org.apdplat.module.system.service.PropertyHolder"%>
-<%@page  import="java.util.Collection"%>
+<%@page  import="java.util.List"%>
 <%@page  import="org.apdplat.platform.util.FileUtils"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
 <%
@@ -35,7 +35,8 @@ if(!SpringSecurityService.isSecurity()){
     response.sendRedirect("platform/index.jsp");
     return;
 }
-String name=OnlineUserService.getUsername(request.getSession(true).getId());
+OnlineUserService onlineUserService = SpringContextUtils.getBean("onlineUserService");
+String name=onlineUserService.getUsername(request.getSession(true).getId());
 if(!"匿名用户".equals(name)){
     //用户已经等登录直接进入主界面
     response.sendRedirect("platform/index.jsp");
@@ -56,11 +57,11 @@ if("checkCodeError".equals(state)){
     return;
 }
 
-Object obj=session.getAttribute(UsernamePasswordAuthenticationFilter.SPRING_SECURITY_LAST_USERNAME_KEY);
+String SPRING_SECURITY_LAST_USERNAME=UserDetailsServiceImpl.SPRING_SECURITY_LAST_USERNAME;
 
 String lastUsername="";
-if(obj!=null){
-    lastUsername=obj.toString();
+if(SPRING_SECURITY_LAST_USERNAME!=null){
+    lastUsername=SPRING_SECURITY_LAST_USERNAME;
     if(request.getParameter("login_error")!=null){
         String tip=UserDetailsServiceImpl.getMessage(lastUsername);
         if(tip!=null){
@@ -77,7 +78,7 @@ String contextPath=org.apdplat.module.system.service.SystemListener.getContextPa
 String appName=PropertyHolder.getProperty("app.name");
 String requestCode="";
 if(FileUtils.existsFile("/WEB-INF/licence")){
-    Collection<String> reqs = FileUtils.getTextFileContent("/WEB-INF/licence");
+    List<String> reqs = FileUtils.getTextFileContent("/WEB-INF/licence");
     if(reqs!=null && reqs.size()==1){
         requestCode=reqs.iterator().next().toString();
     }
@@ -86,7 +87,7 @@ String shortcut=PropertyHolder.getProperty("module.short.name");
 %>
 <html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title><%=appName%></title>
     <link rel="shortcut icon" href="images/<%= shortcut %>.ico" />
     <link rel="stylesheet" type="text/css" href="extjs/css/ext-all.css"/>
@@ -97,7 +98,7 @@ String shortcut=PropertyHolder.getProperty("module.short.name");
     <script type="text/javascript" src="extjs/ux/Toast.js"></script>
     <script type="text/javascript" src="extjs/js/ext-lang-zh_CN.js"></script>
     <script type="text/javascript" src="js/validate.js"></script>
-    <script type="text/javascript" src="js/md5.js"></script>
+    <script type="text/javascript" src="js/sha512.js"></script>
     <script type="text/javascript" src="js/login.js"></script>
     <script type="text/javascript">
         //解决Ext在ie9报错：不支持extjs对象的“createContextualFragment属性或方法”

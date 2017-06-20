@@ -28,13 +28,17 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.apdplat.platform.log.APDPlatLoggerFactory;
 
 /**
  *
  * @author 杨尚川
  */
 public class BackupLogChartDataService {    
-    private static final APDPlatLogger LOG = new APDPlatLogger(BackupLogChartDataService.class);
+    private static final APDPlatLogger LOG = APDPlatLoggerFactory.getAPDPlatLogger(BackupLogChartDataService.class);
 
     public static LinkedHashMap<String,Long> getSequenceData(List<BackupLog> models){    
         Collections.sort(models, new Comparator(){
@@ -51,10 +55,10 @@ public class BackupLogChartDataService {
         if(models.size()<1){
             return data;
         }
-        for(BackupLog item : models){
+        models.forEach(item -> {
             String key=DateTypeConverter.toDefaultDateTime(item.getStartTime());
             data.put(key, item.getProcessTime());
-        }
+        });
         return data;
     }
     public static LinkedHashMap<String,Long> getRateData(List<BackupLog> models){    
@@ -62,18 +66,18 @@ public class BackupLogChartDataService {
         if(models.size()<1){
             return data;
         }
-        long success=0;
-        long fail=0;
-        for(BackupLog item : models){
+        AtomicLong success=new AtomicLong();
+        AtomicLong fail=new AtomicLong();
+        models.forEach(item -> {
             if(BackupLogResult.SUCCESS.equals(item.getOperatingResult())){
-                success++;
+                success.incrementAndGet();
             }
             if(BackupLogResult.FAIL.equals(item.getOperatingResult())){
-                fail++;
+                fail.incrementAndGet();
             }
-        }
-        data.put("备份成功", success);
-        data.put("备份失败", fail);
+        });
+        data.put("备份成功", success.get());
+        data.put("备份失败", fail.get());
         return data;
     }
 }

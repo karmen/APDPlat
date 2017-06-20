@@ -31,6 +31,7 @@ import org.apdplat.platform.service.ServiceFacade;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Resource;
+import org.apdplat.platform.log.APDPlatLoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -39,26 +40,26 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class OrgService {
-    private static final APDPlatLogger LOG = new APDPlatLogger(OrgService.class);
+    private static final APDPlatLogger LOG = APDPlatLoggerFactory.getAPDPlatLogger(OrgService.class);
     @Resource(name="serviceFacade")
     private ServiceFacade serviceFacade;
 
     public static List<String> getChildNames(Org org){
         List<String> names=new ArrayList<>();
         List<Org> child=org.getChild();
-        for(Org item : child){
+        child.forEach(item -> {
             names.add(item.getOrgName());
             names.addAll(getChildNames(item));
-        }
+        });
         return names;
     }
     public static List<Integer> getChildIds(Org org){
         List<Integer> ids=new ArrayList<>();
         List<Org> child=org.getChild();
-        for(Org item : child){
+        child.forEach(item -> {
             ids.add(item.getId());
             ids.addAll(getChildIds(item));
-        }
+        });
         return ids;
     }
     public static boolean isParentOf(Org parent,Org child){
@@ -108,8 +109,7 @@ public class OrgService {
         StringBuilder json=new StringBuilder();
         json.append("[");
 
-        
-        for(Org item : child){
+        child.forEach(item -> {
             json.append("{'text':'")
                 .append(item.getOrgName())
                 .append("','id':'")
@@ -120,9 +120,9 @@ public class OrgService {
                     json.append("','leaf':false,'cls':'folder'");
                 }
            json .append("},");
-        }
+        });
         //删除最后一个,号，添加一个]号
-        json=json.deleteCharAt(json.length()-1);
+        json.setLength(json.length()-1);
         json.append("]");
 
         return json.toString();

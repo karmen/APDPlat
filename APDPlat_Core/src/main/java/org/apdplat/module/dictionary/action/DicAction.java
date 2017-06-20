@@ -21,71 +21,62 @@
 package org.apdplat.module.dictionary.action;
 
 import org.apdplat.module.dictionary.model.Dic;
-import org.apdplat.module.dictionary.model.DicItem;
 import org.apdplat.module.dictionary.service.DicService;
 import org.apdplat.platform.action.ExtJSSimpleAction;
-import org.apdplat.platform.util.Struts2Utils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
-import org.apache.struts2.convention.annotation.Namespace;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Scope("prototype")
 @Controller
-@Namespace("/dictionary")
+@RequestMapping("/dictionary/dic/")
 public class DicAction extends ExtJSSimpleAction<Dic> {
-    @Resource(name = "dicService")
+    @Resource
     private DicService dicService;
-    private String dic;
-    private String tree;
-    private boolean justCode;
     
     /**
      * 
-     * 此类用来提供下列列表服务,主要有两中下列类型：
+     * 此类用来提供下拉列表服务,主要有两种下拉类型：
      * 1、普通下拉选项
      * 2、树形下拉选项
-     * 
+     * @param dic
+     * @param tree
+     * @param justCode
+     * @return 返回值直接给客户端
      */
-    public String store(){
+    @ResponseBody
+    @RequestMapping("store.action")
+    public String store(@RequestParam(required=false) String dic,
+                        @RequestParam(required=false) String tree,
+                        @RequestParam(required=false) String justCode){
         Dic dictionary=dicService.getDic(dic);
         if(dictionary==null){
             LOG.info("没有找到数据词典 "+dic);
-            return null;
+            return "[]";
         }
         if("true".equals(tree)){
             String json = dicService.toStoreJson(dictionary);
-            Struts2Utils.renderJson(json);
+            return json;
         }else{
             List<Map<String,String>> data=new ArrayList<>();
-            for(DicItem item : dictionary.getDicItems()){
-                Map<String,String> map=new HashMap<>();
-                if(justCode){
-                    map.put("value", item.getCode());
+            dictionary.getDicItems().forEach(item -> {
+                Map<String,String> itemMap=new HashMap<>();
+                if("true".equals(justCode)){
+                    itemMap.put("value", item.getCode());
                 }else{
-                    map.put("value", item.getId().toString());
+                    itemMap.put("value", item.getId().toString());
                 }
-                map.put("text", item.getName());
-                data.add(map);
-            }
-            Struts2Utils.renderJson(data);
+                itemMap.put("text", item.getName());
+                data.add(itemMap);
+            });
+            return toJson(data);
         }
-        return null;
-    }
-
-    public void setJustCode(boolean justCode) {
-        this.justCode = justCode;
-    }
-
-    public void setTree(String tree) {
-        this.tree = tree;
-    }
-
-    public void setDic(String dic) {
-        this.dic = dic;
     }
 }

@@ -30,8 +30,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import org.apdplat.platform.annotation.Database;
 import org.apdplat.platform.model.Model;
-import org.compass.annotations.Searchable;
-import org.compass.annotations.SearchableProperty;
+import org.apdplat.platform.search.annotations.Searchable;
+import org.apdplat.platform.search.annotations.SearchableProperty;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -74,7 +74,7 @@ public class MemoryState extends Model {
     
     @ModelAttr("可用内存")
     protected Float usableMemory;
-
+    
     public String getAppName() {
         return appName;
     }

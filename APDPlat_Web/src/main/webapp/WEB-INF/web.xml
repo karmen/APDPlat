@@ -18,6 +18,14 @@
     <listener>
         <listener-class>org.springframework.security.web.session.HttpSessionEventPublisher</listener-class>
     </listener>
+    <filter>
+        <filter-name>IPAccessControlFilter</filter-name>
+        <filter-class>org.apdplat.platform.filter.IPAccessControlFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>IPAccessControlFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
     <!-- 性能过滤器放置到最前, 放置到最后不起作用，放置到最前的统计时间更准确地表示了服务器的处理速度 -->
     <filter>
         <description>记录请求的处理时间，为性能分析提供数据</description>
@@ -66,7 +74,7 @@
       <url-pattern>*.css</url-pattern>
     </filter-mapping>
     -->
-    
+        
     <!-- 对于每一个数据库，都需要一个OpenEntityManagerInViewFilter  -->
     <!-- 默认数据库 -->
     <filter>
@@ -83,6 +91,7 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>    
     <!-- ForLog数据库 -->    
+    <!-- LOG数据不需要在WEB前端进行删除和修改，所以不需要OpenEntityManagerInViewFilter
     <filter>
         <description>在每一次请求到来的时候打开Jpa的实体管理器，在请求结束的时候关闭</description>
         <filter-name>OpenEntityManagerInViewFilterForLog</filter-name>
@@ -98,8 +107,13 @@
     </filter>
     <filter-mapping>
         <filter-name>OpenEntityManagerInViewFilterForLog</filter-name>
-        <url-pattern>/*</url-pattern>
+        <url-pattern>/log/*</url-pattern>
     </filter-mapping>
+    <filter-mapping>
+        <filter-name>OpenEntityManagerInViewFilterForLog</filter-name>
+        <url-pattern>/monitor/*</url-pattern>
+    </filter-mapping>
+     -->    
         
     <filter>
         <description>对POST方式提交的数据做编码转换，对GET方式提交的数据需要在应用服务器中配置URIEncoding="utf-8"</description>
@@ -138,7 +152,7 @@
             <url-pattern>/j_spring_security_check</url-pattern>
     </filter-mapping>
     <filter>
-        <description>系统安全模块，复杂整个系统的安全拦截工作</description>
+        <description>系统安全过滤模块，负责整个系统的安全拦截工作</description>
         <filter-name>springSecurityFilterChain</filter-name>
         <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
     </filter>
@@ -154,17 +168,6 @@
     <filter-mapping>
         <filter-name>autoLoginFilter</filter-name>
         <url-pattern>/platform/*</url-pattern>
-    </filter-mapping>
-    <filter>
-        <description>WEB前端控制器</description>
-        <filter-name>struts2</filter-name>
-        <filter-class>
-            org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter
-        </filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>struts2</filter-name>
-        <url-pattern>/*</url-pattern>
     </filter-mapping>
     <!--
     启用服务器Gzip，包括css、js、jsp、png、gif、jpg等文件
@@ -230,6 +233,15 @@
             <url-pattern>
                     /ckfinder/core/connector/java/connector.java
             </url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <servlet-name>APDPlat</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>APDPlat</servlet-name>
+        <url-pattern>*.action</url-pattern>
     </servlet-mapping>
 
   <!--会话超时时间，单位为分钟-->

@@ -23,23 +23,22 @@ package org.apdplat.module.monitor.action;
 import org.apdplat.module.monitor.model.BackupLog;
 import org.apdplat.module.monitor.service.BackupLogChartDataService;
 import org.apdplat.module.monitor.service.BackupLogSingleService;
-import org.apdplat.module.system.service.LogQueue;
 import org.apdplat.platform.action.ExtJSSimpleAction;
+import org.apdplat.platform.log.BufferLogCollector;
+import org.apdplat.platform.service.ServiceFacade;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
-import org.apache.struts2.convention.annotation.Namespace;
-import org.apdplat.platform.service.ServiceFacade;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
 
 @Scope("prototype")
 @Controller
-@Namespace("/monitor")
+@RequestMapping("/monitor/backup-log/")
 public class BackupLogAction extends ExtJSSimpleAction<BackupLog> {
-    private String category;
-    @Resource(name="backupLogSingleService")
+    @Resource
     private BackupLogSingleService backupLogSingleService;
     //使用日志数据库
     @Resource(name = "serviceFacadeForLog")
@@ -50,9 +49,8 @@ public class BackupLogAction extends ExtJSSimpleAction<BackupLog> {
         return service;
     }
     @Override
-    public String query(){
-        LogQueue.getLogQueue().saveLog();
-        return super.query();
+    protected  void beforeQuery(){
+        BufferLogCollector.handleLog();
     } 
     @Override
     protected void afterRender(Map map,BackupLog obj){
@@ -62,7 +60,7 @@ public class BackupLogAction extends ExtJSSimpleAction<BackupLog> {
         map.remove("appName");
     }
     @Override
-    protected String generateReportData(List<BackupLog> models) {
+    protected String generateReportData(List<BackupLog> models, String category, Integer top) {
         LinkedHashMap<String,Long> data=new LinkedHashMap<>();
         if("rate".equals(category)){
             data=BackupLogChartDataService.getRateData(models);
@@ -72,8 +70,5 @@ public class BackupLogAction extends ExtJSSimpleAction<BackupLog> {
         }
         
         return backupLogSingleService.getXML(data);
-    }
-    public void setCategory(String category) {
-        this.category = category;
     }
 }

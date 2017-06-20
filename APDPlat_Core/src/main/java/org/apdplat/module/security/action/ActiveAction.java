@@ -21,39 +21,34 @@
 package org.apdplat.module.security.action;
 
 import org.apdplat.module.security.service.SecurityCheck;
-import org.apdplat.platform.action.DefaultAction;
 import org.apdplat.platform.util.FileUtils;
-import org.apdplat.platform.util.Struts2Utils;
-import org.apache.struts2.convention.annotation.Namespace;
-import org.springframework.context.annotation.Scope;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
- *
+ * 激活产品
  * @author 杨尚川
  */
-@Scope("prototype")
 @Controller
-@Namespace("/security")
-public class ActiveAction extends DefaultAction{
-    private String licence;
-    
+@RequestMapping("/security/active/")
+public class ActiveAction{
+    @ResponseBody
+    @RequestMapping("buy.action")
     public String buy(){
         
-        return null;
+        return "暂不支持在线购买";
     }
-    public String active(){
+    @ResponseBody
+    @RequestMapping("active.action")
+    public String active(@RequestParam String licence){
         FileUtils.createAndWriteFile("/WEB-INF/classes/licences/apdplat.licence", licence);
         SecurityCheck.check();
         if(FileUtils.existsFile("/WEB-INF/licence")){
-                Struts2Utils.renderText("您的注册码不正确，激活失败！");
+                return "您的注册码不正确，激活失败！";
         }else{
-                Struts2Utils.renderText("激活成功，感谢您的购买！");
+                return "激活成功，感谢您的购买！";
         }
-        return null;
-    }
-
-    public void setLicence(String licence) {
-        this.licence = licence;
     }
 }

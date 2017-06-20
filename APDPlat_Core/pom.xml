@@ -6,7 +6,7 @@
     <groupId>org.apdplat</groupId>
     <artifactId>APDPlat_Core</artifactId>
     <packaging>jar</packaging>
-    <version>2.4</version>
+    <version>2.6</version>
     <name>APDPlat_Core</name>
     
     <url>https://github.com/ysc/APDPlat</url>
@@ -43,38 +43,31 @@
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>1.7</java.version>
+        <java.version>1.8</java.version>
         <!-- 主要依赖库的版本定义 -->
-        <org.springframework.version>3.2.3.RELEASE</org.springframework.version>
-        <compass.version>2.2.0</compass.version>
-        <lucene-highlighter.version>2.4.1</lucene-highlighter.version>
+        <org.springframework.version>4.0.9.RELEASE</org.springframework.version>
         <poi.version>3.8-beta4</poi.version>
-        <spring-security-core.version>3.1.4.RELEASE</spring-security-core.version>
-        <spring-security-web.version>3.1.4.RELEASE</spring-security-web.version>
-        <spring-security-config.version>3.1.4.RELEASE</spring-security-config.version>
-        <spring-security-acl.version>3.1.4.RELEASE</spring-security-acl.version>
-        <spring-security-taglibs.version>3.1.4.RELEASE</spring-security-taglibs.version>
-        <json-lib.version>2.3</json-lib.version>
+        <spring-security-core.version>3.2.0.RELEASE</spring-security-core.version>
+        <spring-security-web.version>3.2.0.RELEASE</spring-security-web.version>
+        <spring-security-config.version>3.2.0.RELEASE</spring-security-config.version>
+        <spring-security-acl.version>3.2.0.RELEASE</spring-security-acl.version>
+        <spring-security-taglibs.version>3.2.0.RELEASE</spring-security-taglibs.version>
         <cglib.version>2.2</cglib.version>
         <commons-pool.version>1.2</commons-pool.version>
         <commons-dbcp.version>1.2.1</commons-dbcp.version>
         <freemarker.version>2.3.15</freemarker.version>
-        <struts2-spring-plugin.version>2.3.15.1</struts2-spring-plugin.version>
-        <struts2-convention-plugin.version>2.3.15.1</struts2-convention-plugin.version>
-        <struts2-core.version>2.3.15.1</struts2-core.version>
         <commons-io.version>2.0.1</commons-io.version>
         <commons-fileupload.version>1.2.2</commons-fileupload.version>
-        <commons-collections.version>3.2.1</commons-collections.version>
+        <commons-collections.version>3.2.2</commons-collections.version>
         <commons-codec.version>1.4</commons-codec.version>
         <commons-lang.version>2.5</commons-lang.version>
         <ognl.version>3.0.1</ognl.version>
         <jasypt.version>1.5</jasypt.version>
-        <hibernate-ehcache.version>4.2.3.Final</hibernate-ehcache.version>
-        <hibernate-memcached.version>1.3</hibernate-memcached.version>
-        <javassist.version>3.8.0.GA</javassist.version>
+        <javassist.version>3.19.0-GA</javassist.version>
         <jaxen.version>1.1.1</jaxen.version>
-        <dom4j.version>1.6.1</dom4j.version>
-        <hibernate-entitymanager.version>4.2.3.Final</hibernate-entitymanager.version>
+        <hibernate-ehcache.version>4.3.9.Final</hibernate-ehcache.version>
+        <hibernate-entitymanager.version>4.3.9.Final</hibernate-entitymanager.version>
+        <hibernate-search.version>5.2.0.Final</hibernate-search.version>
         <slf4j-api.version>1.6.4</slf4j-api.version>
         <log4j-over-slf4j.version>1.6.4</log4j-over-slf4j.version>
         <jul-to-slf4j.version>1.6.4</jul-to-slf4j.version>
@@ -84,13 +77,14 @@
         <junit.version>4.8.2</junit.version>
         <quartz.version>1.8.4</quartz.version>
         <jcaptcha-all.version>1.0-RC6</jcaptcha-all.version>
-        <drools-spring.version>5.2.0.M2</drools-spring.version>
-        <dynamicreports-core.version>2.1.0</dynamicreports-core.version>
         <sigar.version>1.6.4</sigar.version>        
         <cxf.version>2.7.3</cxf.version>
-        <wro4j.version>1.7.0</wro4j.version>
+        <wro4j.version>1.7.7</wro4j.version>
         <birt.version>4.2.2</birt.version>
-        <activiti.version>5.13</activiti.version>
+        <aspectj.version>1.7.4</aspectj.version>
+        <commons-net.version>3.3</commons-net.version>
+        <jackson.version>2.5.2</jackson.version>
+        <solrj.version>4.6.1</solrj.version>
         
         <p6spy.version>1.3</p6spy.version>
         
@@ -122,7 +116,25 @@
         <versions-maven-plugin.version>2.0</versions-maven-plugin.version>
     </properties>
     <!-- 设定除中央仓库(repo1.maven.org/maven2/)外的其他仓库,按设定顺序进行查找. -->
-    <repositories>
+	<repositories>
+		<repository>
+			<id>alimaven</id>
+			<name>aliyun maven</name>
+			<url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+		</repository>
+		<repository>
+			<id>spring-releases</id>
+			<url>https://repo.spring.io/libs-release</url>
+		</repository>
+		<repository>
+			<id>spring-libs-snapshot</id>
+			<url>https://repo.spring.io/libs-snapshot</url>
+		</repository>
+		<repository>
+			<id>org.springframework.maven.milestone</id>
+			<name>Spring Framework Maven Milestone Repository</name>
+			<url>http://maven.springframework.org/milestone</url>
+		</repository>
         <repository>
             <id>offical</id>
             <name>Maven Official Repository</name>
@@ -131,7 +143,6 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
-
         <repository>
             <id>jboss</id>
             <name>Jboss Repository</name>
@@ -140,7 +151,6 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
-
         <repository>
             <id>java.net</id>
             <name>Java.net Repository</name>
@@ -149,19 +159,30 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
-        
         <repository>
-            <id>hibernate-memcached</id>
-            <name>hibernate-memcached</name>
-            <url>http://raykrueger.googlecode.com/svn/repository</url>
+            <id>Activiti</id>
+            <url>https://maven.alfresco.com/nexus/content/groups/public</url>
         </repository>
-        
-        <repository>
-                <id>Activiti</id>
-                <url>https://maven.alfresco.com/nexus/content/groups/public</url>
-        </repository>
-    </repositories>
-    <pluginRepositories>
+	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>alimaven</id>
+			<name>aliyun maven</name>
+			<url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>spring-releases</id>
+			<url>https://repo.spring.io/libs-release</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>spring-libs-snapshot</id>
+			<url>https://repo.spring.io/libs-snapshot</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>org.springframework.maven.milestone</id>
+			<name>Spring Framework Maven Milestone Repository</name>
+			<url>http://maven.springframework.org/milestone</url>
+		</pluginRepository>
         <pluginRepository>
             <id>offical</id>
             <name>Maven Official Repository</name>
@@ -186,7 +207,7 @@
                 <enabled>true</enabled>
             </snapshots>
         </pluginRepository>
-    </pluginRepositories>
+	</pluginRepositories>
 
     <dependencies>
         <!-- 单元测试 -->
@@ -256,6 +277,10 @@
                     <groupId>xml-apis</groupId>
                     <artifactId>xml-apis</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>javassist</groupId>
+                    <artifactId>javassist</artifactId>
+                </exclusion>
                 <!--
                 <exclusion>
                     <groupId>javax.transaction</groupId>
@@ -263,6 +288,11 @@
                 </exclusion>
                 -->
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-orm</artifactId>
+            <version>${hibernate-search.version}</version>
         </dependency>
         <dependency>
             <groupId>jaxen</groupId>
@@ -284,7 +314,7 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>javassist</groupId>
+            <groupId>org.javassist</groupId>
             <artifactId>javassist</artifactId>
             <version>${javassist.version}</version>
         </dependency>
@@ -300,18 +330,6 @@
                 <exclusion>
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.googlecode</groupId>
-            <artifactId>hibernate-memcached</artifactId>
-            <version>${hibernate-memcached.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.hibernate</groupId>
-                    <artifactId>hibernate</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -431,13 +449,12 @@
         <!--
     Spring MVC for Servlet Environments (depends on spring-core, spring-beans, spring-context, spring-web)
     Define this if you use Spring MVC with a Servlet Container such as Apache Tomcat (org.springframework.web.servlet.*)
-
+      -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
             <version>${org.springframework.version}</version>
         </dependency>
-      -->
         <!--
     Spring MVC for Portlet Environments (depends on spring-core, spring-beans, spring-context, spring-web)
     Define this if you use Spring MVC with a Portlet Container (org.springframework.web.portlet.*)
@@ -493,56 +510,11 @@
         </dependency>
         <!-- 加密工具 -->
 
-                <!-- Struts2-->
-        <dependency>
-            <groupId>org.apache.struts</groupId>
-            <artifactId>struts2-core</artifactId>
-            <version>${struts2-core.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.struts</groupId>
-            <artifactId>struts2-convention-plugin</artifactId>
-            <version>${struts2-convention-plugin.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.struts</groupId>
-            <artifactId>struts2-spring-plugin</artifactId>
-            <version>${struts2-spring-plugin.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-beans</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-context</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-web</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-test</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
         <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
             <version>${freemarker.version}</version>
         </dependency>
-        <!-- Struts2 -->
         <dependency>
             <groupId>commons-dbcp</groupId>
             <artifactId>commons-dbcp</artifactId>
@@ -562,18 +534,6 @@
             <groupId>cglib</groupId>
             <artifactId>cglib</artifactId>
             <version>${cglib.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>net.sf.json-lib</groupId>
-            <artifactId>json-lib</artifactId>
-            <version>${json-lib.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-            <classifier>jdk15</classifier>
         </dependency>
 
         <dependency>
@@ -622,22 +582,6 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-taglibs</artifactId>
             <version>${spring-security-taglibs.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.compass-project</groupId>
-            <artifactId>compass</artifactId>
-            <version>${compass.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-highlighter</artifactId>
-            <version>${lucene-highlighter.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -779,61 +723,18 @@
                     <groupId>org.eclipse.birt.runtime</groupId>
                     <artifactId>org.apache.commons.logging</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>milyn</groupId>
+                    <artifactId>flute</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.eclipse.birt.runtime</groupId>
+                    <artifactId>org.apache.commons.codec</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         
-        <!-- activiti -->
-        <dependency>
-            <groupId>org.activiti</groupId>
-            <artifactId>activiti-engine</artifactId>
-            <version>${activiti.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.activiti</groupId>
-            <artifactId>activiti-spring</artifactId>
-            <version>${activiti.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.activiti</groupId>
-            <artifactId>activiti-explorer</artifactId>
-            <version>${activiti.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.vaadin</groupId>
-                    <artifactId>vaadin</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.vaadin.addons</groupId>
-                    <artifactId>dcharts-widget</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.activiti</groupId>
-                    <artifactId>activiti-simple-workflow</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.activiti</groupId>
-            <artifactId>activiti-modeler</artifactId>
-            <version>${activiti.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
+        
         <dependency>
             <groupId>ro.isdc.wro4j</groupId>
             <artifactId>wro4j-core</artifactId>
@@ -850,6 +751,41 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjrt</artifactId>
+            <version>${aspectj.version}</version>
+        </dependency>    
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>${aspectj.version}</version>
+        </dependency>       
+        
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>${commons-net.version}</version>
+            <type>jar</type>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-solrj</artifactId>
+            <version>${solrj.version}</version>
+        </dependency>   
     </dependencies>
     <build>
         <plugins>
@@ -913,11 +849,13 @@
                     <excludes>
                         <exclude>**/uml/**</exclude>
                         <exclude>**/doc/**</exclude>
-                        <exclude>**/org/apdplat/module/security/service/WindowsSequenceService.class</exclude>
-                        <exclude>**/org/apdplat/module/security/service/LinuxSequenceService.class</exclude>
+                        <exclude>**/org/apdplat/module/security/service/sequence/WindowsSequenceService.class</exclude>
+                        <exclude>**/org/apdplat/module/security/service/sequence/LinuxSequenceService.class</exclude>
+                        <exclude>**/org/apdplat/module/security/service/sequence/MacSequenceService.class</exclude>
+                        <exclude>**/org/apdplat/module/security/service/sequence/SolarisSequenceService.class</exclude>
                         <exclude>**/org/apdplat/module/security/service/SecurityService.class</exclude>
-                        <exclude>**/org/apdplat/module/security/service/EncryptClassUtils.class</exclude>
-                        <exclude>**/org/apdplat/module/security/service/AuthorizationUtils.class</exclude>
+                        <exclude>**/org/apdplat/module/security/service/sequence/EncryptClassUtils.class</exclude>
+                        <exclude>**/org/apdplat/module/security/service/sequence/AuthorizationUtils.class</exclude>
                         <exclude>**/org/apdplat/tip/**</exclude>
                         <exclude>**/org/apdplat/module/security/pki/**</exclude>
                     </excludes>

@@ -21,11 +21,12 @@
 package org.apdplat.module.security.ws;
 
 import org.apdplat.module.security.model.User;
-import org.apdplat.module.security.service.PasswordEncoder;
+import org.apdplat.module.security.service.password.PasswordEncoder;
 import org.apdplat.module.security.service.UserDetailsServiceImpl;
 import org.apdplat.platform.log.APDPlatLogger;
 import javax.annotation.Resource;
 import javax.jws.WebService;
+import org.apdplat.platform.log.APDPlatLoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -36,15 +37,17 @@ import org.springframework.stereotype.Service;
 @Service
 @WebService(endpointInterface = "org.apdplat.module.security.ws.UserService")
 public class UserServiceImpl implements UserService{
-    private static final APDPlatLogger LOG = new APDPlatLogger(UserServiceImpl.class);
+    private static final APDPlatLogger LOG = APDPlatLoggerFactory.getAPDPlatLogger(UserServiceImpl.class);
     @Resource(name = "userDetailsServiceImpl")
     private UserDetailsServiceImpl userDetailsServiceImpl;
+    @Resource(name="passwordEncoder")
+    private PasswordEncoder passwordEncoder;
     
     @Override
     public String login(String username, String password) {
         try{
             User user=(User)userDetailsServiceImpl.loadUserByUsername(username);
-            password=PasswordEncoder.encode(password, user);
+            password=passwordEncoder.encode(password, user);
             if(password.equals(user.getPassword())){
                 return "认证成功";
             }else{
@@ -60,7 +63,7 @@ public class UserServiceImpl implements UserService{
         try{
             User user=(User)userDetailsServiceImpl.loadUserByUsername(username);
             if(user!=null){
-                password=PasswordEncoder.encode(password, user);
+                password=passwordEncoder.encode(password, user);
                 if(password.equals(user.getPassword())){
                     return user;
                 }

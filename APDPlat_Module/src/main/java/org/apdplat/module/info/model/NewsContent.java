@@ -29,8 +29,8 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import org.apdplat.platform.annotation.Database;
 import org.apdplat.platform.model.SimpleModel;
-import org.compass.annotations.Searchable;
-import org.compass.annotations.SearchableProperty;
+import org.apdplat.platform.search.annotations.Searchable;
+import org.apdplat.platform.search.annotations.SearchableProperty;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -51,7 +51,6 @@ public class NewsContent extends SimpleModel{
     @SearchableProperty
     @ModelAttr("标题")
     protected String title;
-    @Lob
     @SearchableProperty
     @ModelAttr("内容")
     protected String content;

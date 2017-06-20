@@ -22,10 +22,11 @@ package org.apdplat.module.module.action;
 
 import org.apdplat.module.module.model.Command;
 import org.apdplat.platform.action.ExtJSSimpleAction;
-import org.apache.struts2.convention.annotation.Namespace;
 import org.apdplat.module.module.service.ModuleCache;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
+
 /**
 * 维护树形模块，对应于module.xml文件
  * 在module.xml中的数据未导入到数据库之前，可以通过修改module.xml文件的形式修改树形模块
@@ -36,7 +37,7 @@ import org.springframework.stereotype.Controller;
 */
 @Controller
 @Scope("prototype")
-@Namespace("/module")
+@RequestMapping("/module/edit-command/")
 public class EditCommandAction extends ExtJSSimpleAction<Command> {
 
     @Override

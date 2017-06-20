@@ -32,6 +32,7 @@ import org.apdplat.platform.service.ServiceFacade;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Resource;
+import org.apdplat.platform.log.APDPlatLoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -40,15 +41,15 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class InfoTypeService {
-    private static final APDPlatLogger LOG = new APDPlatLogger(InfoTypeService.class);
+    private static final APDPlatLogger LOG = APDPlatLoggerFactory.getAPDPlatLogger(InfoTypeService.class);
 
     public static List<Integer> getChildIds(InfoType obj) {
         List<Integer> ids=new ArrayList<>();
         List<InfoType> child=obj.getChild();
-        for(InfoType item : child){
+        child.forEach(item -> {
             ids.add(item.getId());
             ids.addAll(getChildIds(item));
-        }
+        });
         return ids;
     }
     @Resource(name="serviceFacade")
@@ -93,8 +94,7 @@ public class InfoTypeService {
         StringBuilder json=new StringBuilder();
         json.append("[");
 
-        
-        for(InfoType item : child){
+        child.forEach(item -> {
             item.setLang(lang);
             json.append("{'text':'")
                 .append(item.getInfoTypeName())
@@ -106,9 +106,9 @@ public class InfoTypeService {
                     json.append("','leaf':false,'cls':'folder'");
                 }
            json .append("},");
-        }
+        });
         //删除最后一个,号，添加一个]号
-        json=json.deleteCharAt(json.length()-1);
+        json.setLength(json.length()-1);
         json.append("]");
 
         return json.toString();

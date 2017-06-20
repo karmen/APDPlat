@@ -22,7 +22,7 @@ Ext.BLANK_IMAGE_URL = '../extjs/images/default/s.gif';
 var model;
 var loginTitle='登录系统';
 var requestCode;
-var activeURL="security/active!active.action";
+var activeURL="security/active/active.action";
 //fieldset的验证
 Ext.QuickTips.init();//支持tips提示
 Ext.form.Field.prototype.msgTarget='side';//提示的方式，枚举值为"qtip","title","under","side",id(元素id)  
@@ -176,7 +176,7 @@ Ext.form.Field.prototype.msgTarget='side';//提示的方式，枚举值为"qtip"
                 return false;
             }
             var url = 'j_spring_security_check';
-            j_password=hex_md5(j_password+'{用户信息}');
+            j_password=hex_sha512(j_password+'{用户信息}');
             Ext.Ajax.request({
                 url : url,
                 params : {

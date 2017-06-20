@@ -23,42 +23,33 @@ package org.apdplat.module.security.action;
 import org.apdplat.module.security.model.Org;
 import org.apdplat.module.security.service.OrgService;
 import org.apdplat.platform.action.ExtJSSimpleAction;
-import org.apdplat.platform.util.Struts2Utils;
 import javax.annotation.Resource;
-import org.apache.struts2.convention.annotation.Namespace;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-@Scope("prototype")
 @Controller
-@Namespace("/security")
+@Scope("prototype")
+@RequestMapping("/security/org/")
 public class OrgAction extends ExtJSSimpleAction<Org> {
-        private String node;
-        @Resource(name="orgService")
+        @Resource
         private OrgService orgService;
 
-        public String store(){
-            return query();
-        }
-        @Override
-        public String query(){
-            //如果node为null则采用普通查询方式
+        @ResponseBody
+        @RequestMapping("store.action")
+        public String store(@RequestParam(required=false) String node){
             if(node==null){
-                return super.query();
+                return "[]";
             }
-            //如果指定了node则采用自定义的查询方式
             if(node.trim().startsWith("root")){
                 String json=orgService.toRootJson();
-                Struts2Utils.renderJson(json);
+                return json;
             }else{
                 int id=Integer.parseInt(node.trim());
                 String json=orgService.toJson(id);
-                Struts2Utils.renderJson(json);
+                return json;
             }
-            return null;
-        }
-
-        public void setNode(String node) {
-            this.node = node;
         }
 }

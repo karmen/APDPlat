@@ -27,13 +27,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import org.apdplat.platform.log.APDPlatLoggerFactory;
 
 /**
  *
  * @author 杨尚川
  */
 public class MemoryStateChartDataService {
-    private static final APDPlatLogger LOG = new APDPlatLogger(MemoryStateChartDataService.class);
+    private static final APDPlatLogger LOG = APDPlatLoggerFactory.getAPDPlatLogger(MemoryStateChartDataService.class);
 
     public static List<MemoryState> getSequenceDataHH(List<MemoryState> models){    
         return getSequenceTimeData(models,"yyyy-MM-dd HH");
@@ -45,25 +46,21 @@ public class MemoryStateChartDataService {
         return getSequenceTimeData(models,"yyyy-MM");
     }
     private static List<MemoryState> getSequenceTimeData(List<MemoryState> models,String format){        
-        LinkedHashMap<String,MemoryState> temp=new LinkedHashMap<>();
+        LinkedHashMap<String,MemoryState> data=new LinkedHashMap<>();
         //将日志数据转换为统计报表数据
-        for(MemoryState item : models){
+        models.forEach(item -> {
             String key=new SimpleDateFormat(format).format(item.getRecordTime());
-            MemoryState value=temp.get(key);
+            MemoryState value=data.get(key);
             if(value==null){
                 value=item;
             }else{
                 //几次采集的内存数据，根据 已分配内存 来判断，谁大说明谁的内存使用情况最糟糕
                 value=value.getTotalMemory()>item.getTotalMemory()?value:item;
             }
-            
-            temp.put(key,value);
-        } 
-        List<MemoryState> list=new ArrayList<>();
-        for(MemoryState value : temp.values()){
-            list.add(value);
-        }
-        return list;
+
+            data.put(key,value);
+        });
+        return new ArrayList<>(data.values());
     }
 
     /**
@@ -72,20 +69,16 @@ public class MemoryStateChartDataService {
      * @return 
      */
     private static List<ProcessTime> mini(List<ProcessTime> models) {
-        LinkedHashMap<String,ProcessTime> LinkedHashMap=new LinkedHashMap<>();
-        for(ProcessTime item : models){
-            ProcessTime value=LinkedHashMap.get(item.getResource());
+        LinkedHashMap<String,ProcessTime> data=new LinkedHashMap<>();
+        models.forEach(item -> {
+            ProcessTime value=data.get(item.getResource());
             if(value==null){
                 value=item;
             }else{
                 value=value.getProcessTime()>item.getProcessTime()?value:item;
             }
-            LinkedHashMap.put(item.getResource(), value);
-        }
-        List<ProcessTime> list=new ArrayList<>();
-        for(ProcessTime item : LinkedHashMap.values()){
-            list.add(item);
-        }
-        return list;
+            data.put(item.getResource(), value);
+        });
+        return new ArrayList<>(data.values());
     }
 }

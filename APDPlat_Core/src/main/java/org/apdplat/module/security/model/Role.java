@@ -54,7 +54,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import org.apdplat.platform.annotation.Database;
 import org.apdplat.platform.model.SimpleModel;
-import org.compass.annotations.SearchableComponent;
+import org.apdplat.platform.search.annotations.SearchableComponent;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -91,7 +91,7 @@ public class Role extends SimpleModel {
     protected List<User> users=new ArrayList<>();
 
     @ModelAttr("超级管理员")
-    protected boolean superManager = false;
+    protected Boolean superManager = false;
     /**
      * 角色拥有的命令
      */
@@ -110,8 +110,8 @@ public class Role extends SimpleModel {
         StringBuilder ids=new StringBuilder();
         
         Set<Integer> moduleIds=new HashSet<>();
-        
-        for(Command command : this.commands){
+
+        this.commands.forEach(command -> {
             ids.append("command-").append(command.getId()).append(",");
             Module module=command.getModule();
             moduleIds.add(module.getId());
@@ -120,11 +120,11 @@ public class Role extends SimpleModel {
                 moduleIds.add(module.getId());
                 module=module.getParentModule();
             }
-        }
-        for(Integer moduleId : moduleIds){
+        });
+        moduleIds.forEach(moduleId -> {
             ids.append("module-").append(moduleId).append(",");
-        }
-        ids=ids.deleteCharAt(ids.length()-1);
+        });
+        ids.setLength(ids.length() - 1);
         return ids.toString();
     }
     /**
@@ -133,7 +133,7 @@ public class Role extends SimpleModel {
      */
     public List<String> getAuthorities() {
         List<String> result = new ArrayList<>();
-        if (superManager) {
+        if (isSuperManager()) {
             result.add("ROLE_SUPERMANAGER");
             //超级管理员只需要一个标识就够了
             //事实上，一个角色如果是超级管理员，那么它的commands是为空的
@@ -150,14 +150,14 @@ public class Role extends SimpleModel {
             //当然，加入以下return语句逻辑更清晰
             return result;
         }
-        for (Command command : commands) {
+        commands.forEach(command -> {
             Map<String,String> map=ModuleService.getCommandPathToRole(command);
-            for(String role : map.values()){
+            map.values().forEach(role -> {
                 StringBuilder str = new StringBuilder();
                 str.append("ROLE_MANAGER").append(role);
                 result.add(str.toString());
-            }
-        }
+            });
+        });
         return result;
     }
  
@@ -206,11 +206,14 @@ public class Role extends SimpleModel {
         this.child.clear();
     }
     @XmlAttribute
-    public boolean isSuperManager() {
+    public Boolean isSuperManager() {
         return superManager;
     }
 
-    public void setSuperManager(boolean superManager) {
+    public void setSuperManager(Boolean superManager) {
+        if(superManager == null){
+            superManager = Boolean.FALSE;
+        }
         this.superManager = superManager;
     }
 

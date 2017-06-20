@@ -20,6 +20,7 @@
 
 package org.apdplat.platform.action;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apdplat.module.security.model.User;
 import org.apdplat.platform.common.DataPrivilegeControl;
 import org.apdplat.platform.criteria.Operator;
@@ -33,8 +34,6 @@ import org.apdplat.platform.criteria.Sequence;
 import org.apdplat.platform.log.APDPlatLogger;
 import org.apdplat.platform.model.Model;
 import org.apdplat.platform.util.ReflectionUtils;
-import com.opensymphony.xwork2.ActionContext;
-import com.opensymphony.xwork2.ActionInvocation;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -43,32 +42,22 @@ import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Resource;
 import javax.persistence.MappedSuperclass;
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import org.apache.commons.lang.StringUtils;
-import org.apache.struts2.ServletActionContext;
-import org.apache.struts2.convention.annotation.Result;
-import org.apache.struts2.convention.annotation.Results;
+import org.apdplat.platform.log.APDPlatLoggerFactory;
 import org.apdplat.platform.service.ServiceFacade;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @MappedSuperclass
-@Results({
-    @Result(name = "error", location = "/error.jsp"),
-    @Result(name = "invalid.token", location = "/invalidToken.jsp"),
-    @Result(name = "success", location = "/_namespace_/_action_/success.jsp"),
-    @Result(name = "input", location = "/_namespace_/_action_/edit.jsp"),
-    @Result(name = "list", type = "freemarker", location = "/_namespace_/_action_/list.ftl"),
-    @Result(name = "detail", type = "freemarker", location = "/_namespace_/_action_/detail.ftl"),
-    @Result(name = "form", type = "freemarker", location = "/_namespace_/_action_/form.ftl")})
 public abstract class ActionSupport extends DataPrivilegeControl{
-    protected final APDPlatLogger LOG = new APDPlatLogger(getClass());
-    
-    protected static final String LIST = "list";
-    protected static final String FORM = "form";
-    protected static final String INPUT = "input";
-    protected static final String ERROR = "error";
-    protected static final String SUCCESS = "success";
-    protected static final String DETAIL = "detail";
+    protected final APDPlatLogger LOG = APDPlatLoggerFactory.getAPDPlatLogger(getClass());
+    protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private Feedback feedback;
     private PageCriteria pageCriteria = new PageCriteria(1, 17);
     private String propertyCriteria;
@@ -86,9 +75,22 @@ public abstract class ActionSupport extends DataPrivilegeControl{
     static {
         defaultOrderCriteria.addOrder(new Order("id", Sequence.DESC));
     }
+
+    @Autowired
+    protected ServletContext servletContext;
     
     @Resource(name = "serviceFacade")
     private ServiceFacade service;
+    
+    public String toJson(Object object){
+        try{
+            return OBJECT_MAPPER.writeValueAsString(object);
+        }catch(Exception e){
+            LOG.error("生成json出错", e);
+        }
+        return "";
+    }
+    
     /**
      * 子类可重载使用特定的数据库服务
      * @return 
@@ -98,13 +100,7 @@ public abstract class ActionSupport extends DataPrivilegeControl{
     }
     
     public Locale getLocale() {
-        ActionContext ctx = ActionContext.getContext();
-        if (ctx != null) {
-            return ctx.getLocale();
-        } else {
-            LOG.debug("Action context not initialized");
-            return null;
-        }
+        return LocaleContextHolder.getLocale();
     }
 
     public String execute() {
@@ -223,25 +219,12 @@ public abstract class ActionSupport extends DataPrivilegeControl{
 
         return result;
     }
-   public static String dealWithResult(String finalLocation, ActionInvocation invocation) {
-        String namespace = invocation.getProxy().getNamespace();
-        String action = invocation.getProxy().getActionName();
-        String method = invocation.getProxy().getMethod();
-
-        if (finalLocation.contains("_namespace_")) {
-            finalLocation = finalLocation.replace("_namespace_", namespace);
-        }
-        if (finalLocation.contains("_action_")) {
-            finalLocation = finalLocation.replace("_action_", action);
-        }
-
-        return finalLocation;
-    }
     protected HttpServletRequest getRequest() {
-        return ServletActionContext.getRequest();
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attrs.getRequest();
     }
     protected HttpSession getSession() {
-        return ServletActionContext.getRequest().getSession();
+        return getRequest().getSession();
     }
 
     private Enumeration<?> getRequestParameterNames() {

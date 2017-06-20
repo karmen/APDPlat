@@ -31,9 +31,9 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import org.apdplat.platform.annotation.Database;
 import org.apdplat.platform.model.Model;
-import org.compass.annotations.Index;
-import org.compass.annotations.Searchable;
-import org.compass.annotations.SearchableProperty;
+import org.apdplat.platform.search.annotations.Index;
+import org.apdplat.platform.search.annotations.Searchable;
+import org.apdplat.platform.search.annotations.SearchableProperty;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -86,7 +86,7 @@ public class IndexLog extends Model {
     @SearchableProperty(index=Index.NOT_ANALYZED)
     @ModelAttr("用户名")
     protected String username;    
-
+    
     public String getUsername() {
         return username;
     }

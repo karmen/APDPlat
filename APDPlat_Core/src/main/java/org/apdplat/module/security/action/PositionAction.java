@@ -26,121 +26,111 @@ import org.apdplat.module.security.model.User;
 import org.apdplat.module.security.service.PositionService;
 import org.apdplat.module.security.service.UserHolder;
 import org.apdplat.platform.action.ExtJSSimpleAction;
-import org.apdplat.platform.util.Struts2Utils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
-import org.apache.struts2.convention.annotation.Namespace;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Scope("prototype")
 @Controller
-@Namespace("/security")
+@RequestMapping("/security/position/")
 public class PositionAction extends ExtJSSimpleAction<Position> {
-        private String node;
-        @Resource(name="positionService")
-        private PositionService positionService;
-        private List<Command> commands;
-        private boolean recursion=false;
+    @Resource
+    private PositionService positionService;
+    private List<Command> commands;
 
-        public String store(){            
-            if(recursion){
-                int rootId = positionService.getRootPosition().getId();
-                String json=positionService.toJson(rootId,recursion);
-                Struts2Utils.renderJson(json);
-                
-                return null;
-            }
-            
-            return query();
+    @ResponseBody
+    @RequestMapping("store.action")
+    public String store(@RequestParam(required=false) String node,
+                        @RequestParam(required=false) String recursion){
+        if(node==null){
+            node = "root";
         }
-        @Override
-        public String query(){
-            //如果node为null则采用普通查询方式
-            if(node==null){
-                return super.query();
-            }
-            
-            //如果指定了node则采用自定义的查询方式
-            if(node.trim().startsWith("root")){
-                String json=positionService.toRootJson(recursion);
-                Struts2Utils.renderJson(json);
-            }else{
-                String[] attr=node.trim().split("-");
-                if(attr.length==2){
-                    int positionId=Integer.parseInt(attr[1]);
-                    String json=positionService.toJson(positionId,recursion);
-                    Struts2Utils.renderJson(json);                    
-                }                
-            }
-            return null;
-        }
-        
-        /**
-         * 删除岗位前，把该岗位从所有引用该岗位的用户中移除
-         * @param ids
-         */
-        @Override
-        public void prepareForDelete(Integer[] ids){
-            User loginUser=UserHolder.getCurrentLoginUser();
-            for(int id :ids){
-                Position position=getService().retrieve(Position.class, id);
-                boolean canDel=true;
-                //获取拥有等待删除的角色的所有用户
-                List<User> users=position.getUsers();
-                for(User user : users){
-                    if(loginUser.getId()==user.getId()){
-                        canDel=false;
-                    }
-                }
-                if(!canDel) {
-                    continue;
-                }
-                for(User user : users){
-                    user.removePosition(position);
-                    getService().update(user);
-                }
+        boolean r = "true".equals(recursion);
+        if(node.trim().startsWith("root")){
+            int rootId = positionService.getRootPosition().getId();
+            String json=positionService.toJson(rootId,r);
+            return json;
+        }else{
+            String[] attr=node.trim().split("-");
+            if(attr.length==2){
+                int positionId=Integer.parseInt(attr[1]);
+                String json=positionService.toJson(positionId,r);
+                return json;
             }
         }
-        @Override
-        protected void retrieveAfterRender(Map map,Position model){
-            map.put("privileges", model.getModuleCommandStr());
-        }
+        return "[]";
+    }
 
-        @Override
-        public void assemblyModelForCreate(Position model) {
+    /**
+     * 删除岗位前，把该岗位从所有引用该岗位的用户中移除
+     * @param ids
+     */
+    @Override
+    public void prepareForDelete(Integer[] ids){
+        User loginUser=UserHolder.getCurrentLoginUser();
+        for(int id :ids){
+            Position position=getService().retrieve(Position.class, id);
+            boolean canDel=true;
+            //获取拥有等待删除的角色的所有用户
+            List<User> users=position.getUsers();
+            for(User user : users){
+                if(loginUser.getId()==user.getId()){
+                    canDel=false;
+                }
+            }
+            if(!canDel) {
+                continue;
+            }
+            users.forEach(user -> {
+                user.removePosition(position);
+                getService().update(user);
+            });
+        }
+    }
+    @Override
+    protected void retrieveAfterRender(Map map,Position model){
+        map.put("privileges", model.getModuleCommandStr());
+    }
+
+    @Override
+    public void assemblyModelForCreate(Position model) {
+        String privileges = getRequest().getParameter("privileges");
+        LOG.debug("privileges:"+privileges);
+        setPrivileges(privileges);
+        model.setCommands(commands);
+    }
+
+    @Override
+    public void assemblyModelForUpdate(Position model){
+        //默认commands==null
+        //当在修改角色的时候，如果客户端不修改commands，则commands==null
+        String privileges = getRequest().getParameter("privileges");
+        LOG.debug("privileges:"+privileges);
+        setPrivileges(privileges);
+        if(commands!=null){
             model.setCommands(commands);
         }
-
-        @Override
-        public void assemblyModelForUpdate(Position model){
-            //默认commands==null
-            //当在修改角色的时候，如果客户端不修改commands，则commands==null
-            if(commands!=null){
-                model.setCommands(commands);
+    }
+    public void setPrivileges(String privileges) {
+        if(privileges==null){
+            return;
+        }
+        String[] ids=privileges.split(",");
+        commands=new ArrayList<>();
+        for(String id :ids){
+            String[] attr=id.split("-");
+            if(attr.length==2){
+                if("command".equals(attr[0])){
+                    Command command=getService().retrieve(Command.class, Integer.parseInt(attr[1]));
+                    commands.add(command);
+                }
             }
         }
-        public void setPrivileges(String privileges) {
-            String[] ids=privileges.split(",");
-            commands=new ArrayList<>();
-            for(String id :ids){
-                String[] attr=id.split("-");
-                if(attr.length==2){
-                    if("command".equals(attr[0])){
-                        Command command=getService().retrieve(Command.class, Integer.parseInt(attr[1]));
-                        commands.add(command);
-                    }
-                }
-            }        
-        }
-
-        public void setNode(String node) {
-            this.node = node;
-        }
-
-        public void setRecursion(boolean recursion) {
-            this.recursion = recursion;
-        }
+    }
 }

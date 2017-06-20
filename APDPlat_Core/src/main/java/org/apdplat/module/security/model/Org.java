@@ -29,7 +29,6 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
@@ -41,9 +40,9 @@ import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import org.apdplat.platform.annotation.Database;
 import org.apdplat.platform.model.SimpleModel;
-import org.compass.annotations.Searchable;
-import org.compass.annotations.SearchableComponent;
-import org.compass.annotations.SearchableProperty;
+import org.apdplat.platform.search.annotations.Searchable;
+import org.apdplat.platform.search.annotations.SearchableComponent;
+import org.apdplat.platform.search.annotations.SearchableProperty;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -69,7 +68,6 @@ public class Org extends SimpleModel{
     protected String address;
     @SearchableProperty
     @ModelAttr("部门主要职能")
-    @Lob
     protected String functions;
     @ManyToOne
     @SearchableComponent

@@ -21,40 +21,46 @@
 package org.apdplat.module.monitor.service;
 
 import org.apdplat.module.monitor.model.MemoryState;
-import org.apdplat.module.system.service.LogQueue;
 import org.apdplat.module.system.service.SystemListener;
 import org.apdplat.platform.log.APDPlatLogger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
+import java.util.Locale;
+import org.apdplat.platform.log.APDPlatLoggerFactory;
+import org.apdplat.platform.log.BufferLogCollector;
 
 /**
  *
  * @author 杨尚川
  */
 public class MemoryMonitorThread extends Thread{
-    private static final APDPlatLogger LOG = new APDPlatLogger(MemoryMonitorThread.class);
-    public boolean running=true;
+    private static final APDPlatLogger LOG = APDPlatLoggerFactory.getAPDPlatLogger(MemoryMonitorThread.class);
+    public volatile boolean running=true;
     private int circle=10;
     public MemoryMonitorThread(int circle){
         this.setDaemon(true);
         this.setName("内存监视线程(Memory monitor thread)");
-        LOG.info("内存监视间隔为(Memory monitor interval) "+circle+" 分钟(min)");
+        LOG.info("内存监视间隔为 "+circle+" 分钟");
+        LOG.info("Memory monitor interval "+circle+" mins", Locale.ENGLISH);
         this.circle=circle;
     }
     
     @Override
     public void run(){
-        LOG.info("内存监视线程启动(Launch memory monitor thread)");
+        LOG.info("内存监视线程启动");
+        LOG.info("Launch memory monitor thread", Locale.ENGLISH);
         while(running){
             log();
             try {
                 Thread.sleep(circle*60*1000);
             } catch (InterruptedException ex) {
                 if(!running){
-                    LOG.info("内存监视线程退出(Exit memory monitor thread)");
+                    LOG.info("内存监视线程退出");
+                    LOG.info("Memory monitor thread abort", Locale.ENGLISH);
                 }else{
-                    LOG.error("内存监视线程出错(Error in memory monitor thread)",ex);
+                    LOG.error("内存监视线程出错", ex);
+                    LOG.error("Error happens in memory monitor thread", ex, Locale.ENGLISH);
                 }
             }
         }
@@ -68,7 +74,8 @@ public class MemoryMonitorThread extends Thread{
         try {
             logger.setServerIP(InetAddress.getLocalHost().getHostAddress());
         } catch (UnknownHostException ex) {
-            LOG.error("用户记录日志出错(Error in user record log)",ex);
+            LOG.error("获取服务器地址出错",ex);
+            LOG.error("Can't get server's internet address", ex, Locale.ENGLISH);
         }
         logger.setAppName(SystemListener.getContextPath());
         logger.setRecordTime(new Date());
@@ -76,6 +83,6 @@ public class MemoryMonitorThread extends Thread{
         logger.setTotalMemory(total);
         logger.setFreeMemory(free);
         logger.setUsableMemory(logger.getMaxMemory()-logger.getTotalMemory()+logger.getFreeMemory());
-        LogQueue.addLog(logger);
+        BufferLogCollector.collect(logger);
     }
 }

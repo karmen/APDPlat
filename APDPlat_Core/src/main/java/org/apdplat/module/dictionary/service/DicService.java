@@ -29,11 +29,12 @@ import org.apdplat.platform.log.APDPlatLogger;
 import org.apdplat.platform.service.ServiceFacade;
 import java.util.List;
 import javax.annotation.Resource;
+import org.apdplat.platform.log.APDPlatLoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DicService {
-    private static final APDPlatLogger LOG = new APDPlatLogger(DicService.class);
+    private static final APDPlatLogger LOG = APDPlatLoggerFactory.getAPDPlatLogger(DicService.class);
     @Resource(name="serviceFacade")
     private ServiceFacade serviceFacade;
     
@@ -82,39 +83,39 @@ public class DicService {
         StringBuilder json=new StringBuilder();
         List<Dic> subDics=dic.getSubDics();
         
-        if(subDics.size()>0){
+        if(!subDics.isEmpty()){
             json.append("[");
-            for(Dic d : subDics){
+            subDics.forEach(subDic -> {
                 json.append("{'text':'")
-                    .append(d.getChinese())
-                    .append("','id':'")
-                    .append(d.getId())
-                    .append("','iconCls':'")
-                    .append(d.getEnglish())
-                    .append("'")
-                    .append(",children:")
-                    .append(toStoreJson(d))
-                    .append(",'leaf':false");
-                
+                        .append(subDic.getChinese())
+                        .append("','id':'")
+                        .append(subDic.getId())
+                        .append("','iconCls':'")
+                        .append(subDic.getEnglish())
+                        .append("'")
+                        .append(",children:")
+                        .append(toStoreJson(subDic))
+                        .append(",'leaf':false");
+
                 json.append("},");
-            }
-            json=json.deleteCharAt(json.length()-1);
+            });
+            json.setLength(json.length()-1);
             json.append("]");
         }else{
             List<DicItem> dicItems=dic.getDicItems();
-            if(dicItems.size()>0){
+            if(!dicItems.isEmpty()){
                 json.append("[");
-                for(DicItem d : dicItems){
+                dicItems.forEach(dicItem -> {
                     json.append("{'text':'")
-                        .append(d.getName())
+                        .append(dicItem.getName())
                         .append("','id':'")
-                        .append(d.getId())
+                        .append(dicItem.getId())
                         .append("','iconCls':'")
-                        .append(d.getName())
+                        .append(dicItem.getName())
                         .append("','leaf':true")
                         .append("},");
-                }
-                json=json.deleteCharAt(json.length()-1);
+                });
+                json.setLength(json.length()-1);
                 json.append("]");
             }
         }
@@ -126,26 +127,26 @@ public class DicService {
         StringBuilder json=new StringBuilder();
         List<Dic> subDics=dic.getSubDics();
         
-        if(subDics.size()>0){
+        if(!subDics.isEmpty()){
             json.append("[");
-            for(Dic d : subDics){
+            subDics.forEach(subDic -> {
                 json.append("{'text':'")
-                    .append(d.getChinese())
-                    .append("','id':'")
-                    .append(d.getId())
-                    .append("','iconCls':'")
-                    .append(d.getEnglish())
-                    .append("'");
-                if(d.getSubDics().size()>0){
+                        .append(subDic.getChinese())
+                        .append("','id':'")
+                        .append(subDic.getId())
+                        .append("','iconCls':'")
+                        .append(subDic.getEnglish())
+                        .append("'");
+                if (subDic.getSubDics().size() > 0) {
                     json.append(",children:")
-                        .append(toJson(d))
-                        .append(",'leaf':false");
-                }else{
+                            .append(toJson(subDic))
+                            .append(",'leaf':false");
+                } else {
                     json.append(",'leaf':true");
                 }
                 json.append("},");
-            }
-            json=json.deleteCharAt(json.length()-1);
+            });
+            json.setLength(json.length()-1);
             json.append("]");
         }
         

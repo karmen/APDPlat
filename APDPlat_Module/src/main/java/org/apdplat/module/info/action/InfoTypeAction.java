@@ -21,51 +21,46 @@
 package org.apdplat.module.info.action;
 
 import org.apdplat.module.info.model.InfoType;
-import org.apdplat.module.info.model.News;
 import org.apdplat.module.info.service.InfoTypeService;
 import org.apdplat.platform.action.ExtJSSimpleAction;
 import org.apdplat.platform.criteria.Property;
-import org.apdplat.platform.util.Struts2Utils;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
-import org.apache.struts2.convention.annotation.Namespace;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Scope("prototype")
 @Controller
-@Namespace("/info")
+@RequestMapping("/info/info-type/")
 public class InfoTypeAction extends ExtJSSimpleAction<InfoType> {
-
-    private String node;
-    @Resource(name = "infoTypeService")
+    @Resource
     private InfoTypeService infoTypeService;
-    private String lang = "zh";
     
     //setInfoTypeName依赖于setLang，所以在创建的时候没有办法确保顺序
     //所以要强制指定
     @Override
     protected void assemblyModelForCreate(InfoType model) {
+        String lang = getRequest().getParameter("lang");
         model.forceSpecifyLanguageForCreate(lang);
     }
     @Override
     protected void assemblyModelForPartUpdate(List<Property> properties) {
-        for(Property property : properties){
-            if("lang".equals(property.getName())){
+        properties.forEach(property -> {
+            if ("lang".equals(property.getName())) {
                 properties.remove(property);
             }
-        }
+        });
     }
     //修改模型的时候，在修改内容之前先设置语言
     @Override
     protected void old(InfoType model) {
+        String lang = getRequest().getParameter("lang");
         LOG.info("控制器设置语言："+lang);
         model.setLang(lang);
-    }
-
-    public String store() {
-        return query();
     }
 
     @Override
@@ -75,6 +70,7 @@ public class InfoTypeAction extends ExtJSSimpleAction<InfoType> {
 
     @Override
     protected void retrieveAfterRender(Map map, InfoType obj) {
+        String lang = getRequest().getParameter("lang");
         if (obj.getParent() != null) {
             obj.getParent().setLang(lang);
             map.put("parent_infoTypeName", obj.getParent().getInfoTypeName());
@@ -84,29 +80,23 @@ public class InfoTypeAction extends ExtJSSimpleAction<InfoType> {
         map.remove("parent");
     }
 
-    @Override
-    public String query() {
-        //如果node为null则采用普通查询方式
-        if (node == null) {
-            return super.query();
+    @ResponseBody
+    @RequestMapping("store.action")
+    public String store(@RequestParam(required=false) String node,
+                        @RequestParam(required=false) String lang){
+        if (lang == null) {
+            lang = "zh";
         }
-        //如果指定了node则采用自定义的查询方式
-        if ("root".equals(node.trim())) {
+        if (node == null) {
+            node = "root";
+        }
+        if (node.trim().startsWith("root")) {
             String json = infoTypeService.toRootJson(lang);
-            Struts2Utils.renderJson(json);
+            return json;
         } else {
             int id = Integer.parseInt(node.trim());
             String json = infoTypeService.toJson(id, lang);
-            Struts2Utils.renderJson(json);
+            return json;
         }
-        return null;
-    }
-
-    public void setNode(String node) {
-        this.node = node;
-    }
-
-    public void setLang(String lang) {
-        this.lang = lang;
     }
 }

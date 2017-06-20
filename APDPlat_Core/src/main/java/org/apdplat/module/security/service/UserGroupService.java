@@ -25,11 +25,12 @@ import org.apdplat.platform.log.APDPlatLogger;
 import org.apdplat.platform.service.ServiceFacade;
 import java.util.List;
 import javax.annotation.Resource;
+import org.apdplat.platform.log.APDPlatLoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserGroupService {
-    private static final APDPlatLogger LOG = new APDPlatLogger(UserGroupService.class);
+    private static final APDPlatLogger LOG = APDPlatLoggerFactory.getAPDPlatLogger(UserGroupService.class);
     @Resource(name="serviceFacade")
     private ServiceFacade serviceFacade;
 
@@ -47,18 +48,18 @@ public class UserGroupService {
         StringBuilder json=new StringBuilder();
         
         json.append("[");
-        for(UserGroup userGroup : userGroups){
+        userGroups.forEach(userGroup -> {
             json.append("{'text':'")
-                .append(userGroup.getUserGroupName())
-                .append("','id':'userGroup-")
-                .append(userGroup.getId())
-                .append("','iconCls':'")
-                .append("role")
-                .append("'")
-                .append(",'leaf':true")
-                .append("},");
-        }
-        json=json.deleteCharAt(json.length()-1);
+                    .append(userGroup.getUserGroupName())
+                    .append("','id':'userGroup-")
+                    .append(userGroup.getId())
+                    .append("','iconCls':'")
+                    .append("role")
+                    .append("'")
+                    .append(",'leaf':true")
+                    .append("},");
+        });
+        json.setLength(json.length()-1);
         json.append("]");
             
         return json.toString();

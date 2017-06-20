@@ -30,12 +30,12 @@
     var positionSelector;
 
     //本页面特殊URL
-    var selectOrgStoreURL=contextPath+'/security/org!store.action';
-    var selectRoleStoreURL=contextPath + '/security/role!store.action?recursion=true';
-    var selectPositionURL=contextPath + '/security/position!store.action?recursion=true';
-    var selectUserGroupURL=contextPath + '/security/user-group!store.action';
-    var resetURL=contextPath+'/'+namespace+'/'+action+'!reset.action';
-    var reportURL=contextPath+'/'+namespace+'/'+action+'!report.action';
+    var selectOrgStoreURL=contextPath+'/security/org/store.action';
+    var selectRoleStoreURL=contextPath + '/security/role/store.action?recursion=true';
+    var selectPositionURL=contextPath + '/security/position/store.action?recursion=true';
+    var selectUserGroupURL=contextPath + '/security/user-group/store.action';
+    var resetURL=contextPath+'/'+namespace+'/'+action+'/reset.action';
+    var reportURL=contextPath+'/'+namespace+'/'+action+'/report.action';
      
     //高级搜索
     AdvancedSearchModel = function() {
@@ -97,7 +97,7 @@
     CreateModel = function() {
         return {
             getItems: function() {
-                orgSelector=new TreeSelector('model.org.name','',selectOrgStoreURL,rootNodeID,rootNodeText,"组织架构",'model.org.id','95%');
+                orgSelector=new TreeSelector('model.org.orgName','',selectOrgStoreURL,rootNodeID,rootNodeText,"组织架构",'model.org.id','95%');
                
                 var roleLoader = new parent.Ext.tree.TreeLoader({
                     dataUrl:selectRoleStoreURL
@@ -318,7 +318,7 @@
     ModifyModel = function() {
         return {
             getItems: function(model) {
-                var orgSelector=new TreeSelector('model.org.name',model.orgName,selectOrgStoreURL,rootNodeID,rootNodeText,"组织架构",'model.org.id','95%');
+                var orgSelector=new TreeSelector('model.org.orgName',model.orgName,selectOrgStoreURL,rootNodeID,rootNodeText,"组织架构",'model.org.id','95%');
                 
                 var roleLoader = new parent.Ext.tree.TreeLoader({
                     dataUrl:selectRoleStoreURL

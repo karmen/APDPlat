@@ -34,8 +34,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 import org.apdplat.platform.annotation.Database;
 import org.apdplat.platform.model.SimpleModel;
-import org.compass.annotations.Searchable;
-import org.compass.annotations.SearchableComponent;
+import org.apdplat.platform.search.annotations.Searchable;
+import org.apdplat.platform.search.annotations.SearchableComponent;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -57,7 +57,7 @@ public class News extends SimpleModel{
     protected InfoType infoType;
     
     @ModelAttr("是否可用")
-    protected boolean enabled=true;
+    protected Boolean enabled=true;
     
     
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "news")
@@ -131,11 +131,14 @@ public class News extends SimpleModel{
         this.infoType = infoType;
     }
 
-    public boolean isEnabled() {
+    public Boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(Boolean enabled) {
+        if(enabled==null){
+            enabled = Boolean.FALSE;
+        }
         this.enabled = enabled;
     }    
 
